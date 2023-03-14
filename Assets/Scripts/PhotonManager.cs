@@ -11,6 +11,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     [SerializeField] private ListItem _itemPrefab;
     [SerializeField] private Transform _content;
 
+    private List<RoomInfo> _allRoomsInfo = new List<RoomInfo>();
+
     private void Start()
     {
         PhotonNetwork.ConnectUsingSettings();
@@ -20,7 +22,11 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public override void OnConnectedToMaster()
     {
         Debug.Log("Вы подключились к: " + PhotonNetwork.CloudRegion);
-        PhotonNetwork.JoinLobby();
+
+        if (!PhotonNetwork.InLobby)
+        {
+            PhotonNetwork.JoinLobby();
+        }
     }
 
     public override void OnDisconnected(DisconnectCause cause)
@@ -55,11 +61,45 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     {
         foreach (RoomInfo info in roomList)
         {
+            for (int i = 0; i < _allRoomsInfo.Count; i++)
+            {
+                if (_allRoomsInfo[i].masterClientId == info.masterClientId)
+                {
+                    return;
+                }
+            }
+            
             ListItem listItem = Instantiate(_itemPrefab, _content);
             if (listItem != null)
             {
                 listItem.SetInfo(info);
+                _allRoomsInfo.Add(info);
             }
         }
+    }
+
+    public override void OnJoinedRoom()
+    {
+        PhotonNetwork.LoadLevel("GameScena");
+    }
+
+    public void JoinRandRoomButton()
+    {
+        PhotonNetwork.JoinRandomRoom();
+    }
+
+    public void JoinButton()
+    {
+        PhotonNetwork.JoinRoom(_roomName.text);
+    }
+
+    public void LeaveButton()
+    {
+        PhotonNetwork.LeaveRoom();
+    }
+
+    public override void OnLeftRoom()
+    {
+        PhotonNetwork.LoadLevel("Main");
     }
 }
